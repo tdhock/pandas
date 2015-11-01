@@ -1,0 +1,109 @@
+pandas + extractall + extractiter
+
+This fork implements named access to capture group data from several
+matches, when applying a [[https://github.com/tdhock/regex-tutorial][named capture regular expression]] to a pandas
+Series =S=. The table below compares the existing pandas methods for
+regular expressions to the new =extractall= and =extractiter= methods
+that I propose in this fork.
+
+| method        | matches per subject | names? | new in this fork? |
+|---------------+---------------------+--------+-------------------|
+| =extract=     | 1                   | yes    | no                |
+| =findall=     | several             | no     | no                |
+|---------------+---------------------+--------+-------------------|
+| =extractall=  | several             | yes    | yes               |
+| =extractiter= | several             | yes    | yes               |
+
+*** Existing pandas methods for regular expressions
+
+The excellent =S.str.extract(pattern)= method applies the regular
+expression =pattern= to each element of =S=, and returns a DataFrame
+with one row for each subject and one column for each capture
+group. If the capture groups have names, then they will be used for
+the column names of the result. This method is great if each subject
+has just one match. But what if each subject has a variable number of
+matches?
+
+#+BEGIN_SRC python
+  import re
+  import pandas as pd
+  import numpy as np
+  subject_list = [
+      'dave@google.com',
+      'tdhock5@gmail.com',
+      'maudelaperriere@gmail.com',
+      'rob@gmail.com some text steve@gmail.com',
+      'a@b.com some text c@d.com and e@f.com',
+      np.nan,
+      "",
+  ]
+  series_index = pd.MultiIndex.from_tuples([
+      ("single", "Dave"),
+      ("single", "Toby"),
+      ("single", "Maude"),
+      ("multiple", "robAndSteve"),
+      ("multiple", "abcdef"),
+      ("none", "missing"),
+      ("none", "empty"),
+  ], names=("matches", "subject"))
+  S = pd.Series(subject_list, series_index)
+#+END_SRC
+
+#+BEGIN_SRC python
+>>> print S
+matches   subject    
+single    Dave                                   dave@google.com
+          Toby                                 tdhock5@gmail.com
+          Maude                        maudelaperriere@gmail.com
+multiple  robAndSteve    rob@gmail.com some text steve@gmail.com
+          abcdef           a@b.com some text c@d.com and e@f.com
+none      missing                                            NaN
+          empty                                                 
+dtype: object
+>>> 
+#+END_SRC
+
+The =S.str.findall= returns a Series of lists of tuples, but ignores
+the capture group names:
+
+#+BEGIN_SRC python
+  named_pattern = r'''
+  (?P<user>[a-z0-9]+)
+  @
+  (?P<domain>[a-z]+)
+  \.
+  (?P<tld>[a-z]{2,4})
+  '''
+#+END_SRC
+
+#+BEGIN_SRC python
+>>> S.str.findall(named_pattern, re.VERBOSE)
+matches   subject    
+single    Dave                              [(dave, google, com)]
+          Toby                            [(tdhock5, gmail, com)]
+          Maude                   [(maudelaperriere, gmail, com)]
+multiple  robAndSteve    [(rob, gmail, com), (steve, gmail, com)]
+          abcdef          [(a, b, com), (c, d, com), (e, f, com)]
+none      missing                                             NaN
+          empty                                                []
+dtype: object
+>>> 
+#+END_SRC
+
+*** New methods in this fork
+
+My fork of pandas includes the =extractall= and =extractiter= methods,
+which allow access *by name* to the capture group data from *several*
+matches. The =extractall= method returns a DataFrame with one row for
+each match, indexed by the subject from which the match came:
+
+#+BEGIN_SRC python
+
+#+END_SRC
+
+The =extractiter= method returns an iterator that yields a =DataFrame=
+for every element of =S=:
+
+#+BEGIN_SRC python
+
+#+END_SRC
