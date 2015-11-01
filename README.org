@@ -98,12 +98,41 @@ matches. The =extractall= method returns a DataFrame with one row for
 each match, indexed by the subject from which the match came:
 
 #+BEGIN_SRC python
-
+>>> S.str.extractall(named_pattern, re.VERBOSE)
+                                 user  domain  tld
+matches  subject                                  
+single   Dave                    dave  google  com
+         Toby                 tdhock5   gmail  com
+         Maude        maudelaperriere   gmail  com
+multiple robAndSteve              rob   gmail  com
+         robAndSteve            steve   gmail  com
+         abcdef                     a       b  com
+         abcdef                     c       d  com
+         abcdef                     e       f  com
+>>> 
 #+END_SRC
 
 The =extractiter= method returns an iterator that yields a =DataFrame=
 for every element of =S=:
 
 #+BEGIN_SRC python
-
+>>> for df in S.str.extractiter(named_pattern, re.VERBOSE):
+...   print df["user"]
+... 
+0    dave
+Name: user, dtype: object
+0    tdhock5
+Name: user, dtype: object
+0    maudelaperriere
+Name: user, dtype: object
+0      rob
+1    steve
+Name: user, dtype: object
+0    a
+1    c
+2    e
+Name: user, dtype: object
+Series([], Name: user, dtype: object)
+Series([], Name: user, dtype: object)
+>>> 
 #+END_SRC
